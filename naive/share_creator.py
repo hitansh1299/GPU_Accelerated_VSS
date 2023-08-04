@@ -5,15 +5,12 @@ import numpy as np
 from numba import jit, vectorize
 import numba as nb
 
-
-IMAGE = io.imread('images.jpeg')
 BITPLANE_COUNT = 16
-# plt.imshow(IMAGE)
 
 '''
 Using arithmetic instead of bitwise operations because python has a "fast track" for arithmetic operations
 '''
-@jit(nopython=True)
+# @jit(nopython=True)
 def color_to_gray(img: np.ndarray):
     gray_img = np.zeros(img.shape, dtype=np.uint16)
     get_first_5_bits = lambda x: x // 0b1000
@@ -21,11 +18,11 @@ def color_to_gray(img: np.ndarray):
     # plt.imshow(gray_img, cmap='gray')
     return gray_img
 
-@vectorize(nopython=True)
+# @vectorize(nopython=True)
 def get_bitplane(img: np.ndarray, n: int):
     return (img // 2**n) & 1
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def create_bitplane_shares(img: np.ndarray):
     shares = {
         3: (np.array([[0,1],[0,1]]), np.array([[1,0],[1,0]])),
@@ -49,7 +46,7 @@ def denoise_rebuilt_image(img: np.ndarray):
     return denoised
 
 #Broken the function into two parts to make to keep the pure numba functions separate from Matplotlib utils
-@jit(nopython=True)
+# @jit(nopython=True)
 def __generate_shares__(img: np.ndarray):
     img = color_to_gray(img)
     share_image1 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint16)
@@ -60,8 +57,8 @@ def __generate_shares__(img: np.ndarray):
         # print(i, bitplane.shape)
         s1, s2 = create_bitplane_shares(bitplane)
         # print(s1.shape, s2.shape)
-        share_image1 = share_image1 + (s1 * 2**i).astype(np.uint16)
-        share_image2 = share_image2 + (s2 * 2**i).astype(np.uint16)
+        share_image1 = share_image1 + (s1 * 2**i)
+        share_image2 = share_image2 + (s2 * 2**i)
         # print('All done here')
     return share_image1, share_image2
 
@@ -74,12 +71,15 @@ def generate_shares(img: np.ndarray, verbose = False):
         for i in range(BITPLANE_COUNT):
             plt.subplot(3, BITPLANE_COUNT, i+1)
             plt.axis('off')
+            plt.xlabel(f'Bitplane {i}')
             plt.imshow(get_bitplane(img, i), cmap='gray')
             plt.subplot(3, BITPLANE_COUNT, i+BITPLANE_COUNT+1)
             plt.axis('off')
+            plt.xlabel(f'Bitplane {i}')
             plt.imshow(get_bitplane(share1,i), cmap='gray')
             plt.subplot(3, BITPLANE_COUNT, i+BITPLANE_COUNT*2+1)
             plt.axis('off')
+            plt.xlabel(f'Bitplane {i}')
             plt.imshow(get_bitplane(share2,i), cmap='gray')
         plt.show()
         plt.subplot(1,4,1)
@@ -93,6 +93,7 @@ def generate_shares(img: np.ndarray, verbose = False):
         plt.show()
     return share1, share2
 
-import timeit
+
 if __name__ == '__main__':
-    generate_shares(IMAGE, verbose=False)
+    IMAGE = io.imread('images.jpeg')
+    generate_shares(IMAGE, verbose=True)
