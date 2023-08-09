@@ -12,6 +12,7 @@ Using arithmetic instead of bitwise operations because python has a "fast track"
 '''
 # @jit(nopython=True)
 def color_to_gray(img: np.ndarray):
+    img = img.astype(np.uint16)
     gray_img = np.zeros(img.shape, dtype=np.uint16)
     get_first_5_bits = lambda x: x // 0b1000
     gray_img = get_first_5_bits(img[:, :, 0]) * 2048 + get_first_5_bits(img[:, :, 1]) * 64 + get_first_5_bits(img[:, :, 2]) * 2
@@ -25,10 +26,10 @@ def get_bitplane(img: np.ndarray, n: int):
 # @jit(nopython=True)
 def create_bitplane_shares(img: np.ndarray):
     shares = {
-        3: (np.array([[0,1],[0,1]]), np.array([[1,0],[1,0]])),
-        2: (np.array([[1,0],[1,0]]), np.array([[0,1],[0,1]])),
-        1: (np.array([[1,0],[1,0]]), np.array([[1,0],[1,0]])),
-        0: (np.array([[0,1],[0,1]]), np.array([[0,1],[0,1]]))
+        0: (np.array([[0,1],[0,1]]), np.array([[1,0],[1,0]])),
+        1: (np.array([[1,0],[1,0]]), np.array([[0,1],[0,1]])),
+        2: (np.array([[1,0],[1,0]]), np.array([[1,0],[1,0]])),
+        3: (np.array([[0,1],[0,1]]), np.array([[0,1],[0,1]]))
     }   
     img = img*2 + np.random.randint(0, 2, size=img.shape)
     share1 = np.zeros((img.shape[0] * 2, img.shape[1] * 2), dtype=np.uint8)
@@ -89,7 +90,7 @@ def generate_shares(img: np.ndarray, verbose = False):
         plt.subplot(1,4,3)
         plt.imshow(share2, cmap='gray')
         plt.subplot(1,4,4)
-        plt.imshow(denoise_rebuilt_image(share1 | share2), cmap='gray')
+        plt.imshow(denoise_rebuilt_image(share1 & share2), cmap='gray')
         plt.show()
     return share1, share2
 
