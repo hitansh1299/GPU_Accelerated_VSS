@@ -3,7 +3,7 @@ import skimage.io as io
 import numpy as np
 from numba import jit, vectorize
 import numba as nb
-import share_combiner
+
 BITPLANE_COUNT = 16
 
 '''
@@ -15,7 +15,6 @@ def color_to_gray(img: np.ndarray):
     gray_img = np.zeros(img.shape, dtype=np.uint16)
     get_first_5_bits = lambda x: x // 0b1000
     gray_img = get_first_5_bits(img[:, :, 0]) * 2048 + get_first_5_bits(img[:, :, 1]) * 64 + get_first_5_bits(img[:, :, 2]) * 2
-    # plt.imshow(gray_img, cmap='gray')
     return gray_img
 
 @vectorize(nopython=True)
@@ -56,8 +55,8 @@ def __generate_shares__(img: np.ndarray):
 def generate_shares(img: np.ndarray, verbose = False):
     share1, share2 = __generate_shares__(img)
     if verbose:
+        import share_combiner
         img = color_to_gray(img)
-        print("orig gray", img[100:120,100:120])
         plt.figure(figsize=(30,160))
         for i in range(BITPLANE_COUNT):
             plt.subplot(3, BITPLANE_COUNT, i+1)
@@ -82,7 +81,6 @@ def generate_shares(img: np.ndarray, verbose = False):
         plt.subplot(1,4,4)
         combined_share = share_combiner.denoise_image(share1 & share2)
         plt.imshow(combined_share, cmap='gray')
-        print("combined share",combined_share[100:120,100:120])
         plt.show()
     return share1, share2
 

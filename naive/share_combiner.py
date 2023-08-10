@@ -1,9 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import skimage.io as io
-from skimage.measure import block_reduce
-from numba import jit
-import share_creator
 
 def block_reduce_or(img: np.ndarray, block_size: tuple):
     result = np.bitwise_or.reduceat(np.bitwise_or.reduceat(img, np.arange(0, img.shape[0], block_size), axis=0),
@@ -16,11 +13,8 @@ def denoise_image(img: np.ndarray):
 
 def __combine_shares__(share1: np.ndarray, share2: np.ndarray):
     combined_share = np.bitwise_and(share1, share2)
-    print("combined_share", combined_share[0:10,0:10])
     combined_share = denoise_image(combined_share)
-    print("Denoised share", combined_share[0:10,0:10])
     combined_share = gray_to_color(combined_share)
-    print("color share", combined_share[0:10,0:10])
     return combined_share
 
 def gray_to_color(img: np.ndarray):
@@ -43,8 +37,3 @@ def combine_shares(share1: np.ndarray, share2: np.ndarray, verbose=True):
         plt.imshow(combined_share)
         plt.show()
     return combined_share
-
-if __name__ == "__main__":
-    IMAGE = io.imread('images.jpeg')
-    share1, share2 = share_creator.generate_shares(IMAGE, verbose=False)
-    combine_shares(share1, share2, verbose=True)

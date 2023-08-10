@@ -2,28 +2,24 @@ import matplotlib.pyplot as plt
 import skimage.io as io
 from skimage.measure import block_reduce
 import numpy as np
-from numba import jit, vectorize
-import numba as nb
 
 BITPLANE_COUNT = 16
 
 '''
 Using arithmetic instead of bitwise operations because python has a "fast track" for arithmetic operations
 '''
-# @jit(nopython=True)
 def color_to_gray(img: np.ndarray):
     img = img.astype(np.uint16)
     gray_img = np.zeros(img.shape, dtype=np.uint16)
     get_first_5_bits = lambda x: x // 0b1000
     gray_img = get_first_5_bits(img[:, :, 0]) * 2048 + get_first_5_bits(img[:, :, 1]) * 64 + get_first_5_bits(img[:, :, 2]) * 2
-    # plt.imshow(gray_img, cmap='gray')
     return gray_img
 
-# @vectorize(nopython=True)
+
 def get_bitplane(img: np.ndarray, n: int):
     return (img // 2**n) & 1
 
-# @jit(nopython=True)
+
 def create_bitplane_shares(img: np.ndarray):
     shares = {
         0: (np.array([[0,1],[0,1]]), np.array([[1,0],[1,0]])),
@@ -40,14 +36,6 @@ def create_bitplane_shares(img: np.ndarray):
             share2[i*2:i*2+2, j*2:j*2+2] = shares[img[i][j]][1]
     return share1.astype(np.uint16), share2.astype(np.uint16)
 
-def denoise_rebuilt_image(img: np.ndarray):
-    denoised = block_reduce(img, (2, 2), np.sum) #TODO: Replace this with a vectorizable algorithm
-    denoised = np.kron(denoised, np.ones((2, 2)))
-    # plt.imshow(denoised, cmap='gray')
-    return denoised
-
-#Broken the function into two parts to make to keep the pure numba functions separate from Matplotlib utils
-# @jit(nopython=True)
 def __generate_shares__(img: np.ndarray):
     img = color_to_gray(img)
     share_image1 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint16)
@@ -55,18 +43,18 @@ def __generate_shares__(img: np.ndarray):
     # print(img.shape)
     for i in range(BITPLANE_COUNT):
         bitplane = get_bitplane(img, i)
-        # print(i, bitplane.shape)
+
         s1, s2 = create_bitplane_shares(bitplane)
-        # print(s1.shape, s2.shape)
+
         share_image1 = share_image1 + (s1 * 2**i)
         share_image2 = share_image2 + (s2 * 2**i)
-        # print('All done here')
     return share_image1, share_image2
 
 def generate_shares(img: np.ndarray, verbose = False):
     share1, share2 = __generate_shares__(img)
-    print(share1)
+    # print(share1)
     if verbose:
+        from share_combiner import denoise_image
         img = color_to_gray(img)
         plt.figure(figsize=(30,160))
         for i in range(BITPLANE_COUNT):
@@ -90,11 +78,6 @@ def generate_shares(img: np.ndarray, verbose = False):
         plt.subplot(1,4,3)
         plt.imshow(share2, cmap='gray')
         plt.subplot(1,4,4)
-        plt.imshow(denoise_rebuilt_image(share1 & share2), cmap='gray')
+        plt.imshow(denoise_image(share1 & share2), cmap='gray')
         plt.show()
     return share1, share2
-
-
-if __name__ == '__main__':
-    IMAGE = io.imread('images.jpeg')
-    generate_shares(IMAGE, verbose=True)

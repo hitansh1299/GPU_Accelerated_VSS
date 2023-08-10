@@ -3,14 +3,13 @@ import matplotlib.pyplot as plt
 import skimage.io as io
 # from skimage.measure import block_reduce
 from numba import jit, prange
-import share_creator
 from numpy.typing import NDArray
 
 @jit(nopython=True)
 def __block_reduce_add__(img: np.ndarray, block_size: tuple):
     x = np.zeros((img.shape[0]//block_size[0], img.shape[1]//block_size[1]), dtype=np.uint16)
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
+    for i in prange(x.shape[0]):
+        for j in prange(x.shape[1]):
             x[i][j] = np.sum(img[i:i+block_size[0], j:j+block_size[1]])
             j += block_size[1]
         i += block_size[0]
@@ -20,8 +19,8 @@ def __block_reduce_add__(img: np.ndarray, block_size: tuple):
 @jit(nopython=True)
 def __block_reduce_or__(img: np.ndarray, block_size: tuple):
     x = np.zeros((img.shape[0]//block_size[0], img.shape[1]//block_size[1]))
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
+    for i in prange(x.shape[0]):
+        for j in prange(x.shape[1]):
             x[i][j] =   img[i * block_size[0]][j * block_size[1]] | \
                         img[i * block_size[0] + 1][j * block_size[1]] | \
                         img[i * block_size[0]][j * block_size[1] + 1] | \
@@ -78,8 +77,3 @@ def combine_shares(share1: np.ndarray, share2: np.ndarray, verbose=True):
         plt.imshow(combined_share)
         plt.show()
     return combined_share
-
-if __name__ == "__main__":
-    IMAGE = io.imread('images.jpeg')
-    share1, share2 = share_creator.generate_shares(IMAGE, verbose=False)
-    combine_shares(share1, share2, verbose=True)
