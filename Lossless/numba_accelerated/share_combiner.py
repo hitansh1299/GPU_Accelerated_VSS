@@ -5,7 +5,7 @@ import skimage.io as io
 from numba import jit, prange
 from numpy.typing import NDArray
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def __block_reduce_add__(img: np.ndarray, block_size: tuple):
     x = np.zeros((img.shape[0]//block_size[0], img.shape[1]//block_size[1]), dtype=np.uint16)
     for i in prange(x.shape[0]):
@@ -16,7 +16,7 @@ def __block_reduce_add__(img: np.ndarray, block_size: tuple):
         
     return x.astype(np.uint16)
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def __block_reduce_or__(img: np.ndarray, block_size: tuple):
     x = np.zeros((img.shape[0]//block_size[0], img.shape[1]//block_size[1]))
     for i in prange(x.shape[0]):
@@ -28,34 +28,34 @@ def __block_reduce_or__(img: np.ndarray, block_size: tuple):
             
     return x.astype(np.uint16)
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def block_reduce_add(img: np.ndarray, block_size: tuple) -> NDArray[np.uint16]:
     # result = np.add.reduceat(np.add.reduceat(img, np.arange(0, img.shape[0], block_size), axis=0),
     #                                   np.arange(0, img.shape[1], block_size), axis=1, dtype=np.uint16)
     result = __block_reduce_add__(img, block_size)
     return result.astype(np.uint16)
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def block_reduce_or(img: np.ndarray, block_size: tuple) -> NDArray[np.uint16]:
     # result = np.add.reducseat(np.bitwise_or.reduceat(img, np.arange(0, img.shape[0], block_size), axis=0),
     #                                   np.arange(0, img.shape[1], block_size), axis=1, dtype=np.uint16)
     result = __block_reduce_or__(img, block_size)
     return result.astype(np.uint16)
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def denoise_image(img: np.ndarray):
     denoised = block_reduce_or(img, (2,2))
 
     return denoised
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def __combine_shares__(share1: np.ndarray, share2: np.ndarray):
     combined_share = np.bitwise_and(share1, share2)
     combined_share = denoise_image(combined_share)
     combined_share = gray_to_color(combined_share)
     return combined_share
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def gray_to_color(img: np.ndarray):
     color_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint16)
 

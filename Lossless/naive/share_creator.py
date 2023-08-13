@@ -8,11 +8,12 @@ BITPLANE_COUNT = 16
 '''
 Using arithmetic instead of bitwise operations because python has a "fast track" for arithmetic operations
 '''
-def color_to_gray(img: np.ndarray):
+def color_to_gray(img: np.ndarray, save_bits = 5):
     img = img.astype(np.uint16)
     gray_img = np.zeros(img.shape, dtype=np.uint16)
-    get_first_5_bits = lambda x: x // 0b1000
-    gray_img = get_first_5_bits(img[:, :, 0]) * 2048 + get_first_5_bits(img[:, :, 1]) * 64 + get_first_5_bits(img[:, :, 2]) * 2
+    _ = 1 << save_bits
+    get_first_n_bits = lambda x: x // save_bits
+    gray_img = get_first_n_bits(img[:, :, 0]) * 2048 + get_first_n_bits(img[:, :, 1]) * 64 + get_first_n_bits(img[:, :, 2]) * 2
     return gray_img
 
 
@@ -80,4 +81,4 @@ def generate_shares(img: np.ndarray, verbose = False):
         plt.subplot(1,4,4)
         plt.imshow(denoise_image(share1 & share2), cmap='gray')
         plt.show()
-    return share1, share2
+    return share1, share2   

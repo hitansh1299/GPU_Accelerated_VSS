@@ -36,4 +36,4 @@ def combine_shares(share1: np.ndarray, share2: np.ndarray, verbose=True):
     if verbose:
         plt.imshow(combined_share)
         plt.show()
-    return combined_share
+    return combined_share   
