@@ -7,3 +7,5 @@ scratch.ipynb
 */frames/*
 frames/video_frames/*
 *.pyc
+*.nbc
+*.nbi
