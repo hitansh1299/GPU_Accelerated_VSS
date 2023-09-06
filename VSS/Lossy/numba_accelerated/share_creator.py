@@ -56,14 +56,15 @@ def create_bitplane_shares(img: np.ndarray):
     return share1.astype(np.uint8), share2.astype(np.uint8)
 
 #Broken the function into two parts to make to keep the pure numba functions separate from Matplotlib utils
-@jit(nopython=True)
+@jit(nopython=True, parallel=True, cache=True)
 def __generate_shares__(img: np.ndarray):
     # img = rgb_to_ycbcr(img)
+    img = img.astype(np.uint8)
     img = compress(img)
     share_image1 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint8)
     share_image2 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint8)
 
-    for i in range(BITPLANE_COUNT):
+    for i in range(0,BITPLANE_COUNT):
         bitplane = get_bitplane(img, i)
         s1, s2 = create_bitplane_shares(bitplane)
         share_image1 = share_image1 + (s1 * 2**i).astype(np.uint8)
@@ -106,4 +107,4 @@ def generate_shares(img: np.ndarray, verbose = False):
 if __name__ == '__main__':
     IMAGE = io.imread('images.jpeg')
     # generate_shares(IMAGE, verbose=True)
-    
+

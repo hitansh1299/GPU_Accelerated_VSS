@@ -9,3 +9,9 @@ frames/video_frames/*
 *.pyc
 *.nbc
 *.nbi
+*.avi
+*.mp4
+output.avi
+share1.avi
+share2.avi
+share1.avi

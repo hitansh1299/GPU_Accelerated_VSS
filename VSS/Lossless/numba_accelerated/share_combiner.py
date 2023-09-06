@@ -35,14 +35,14 @@ def block_reduce_add(img: np.ndarray, block_size: tuple) -> NDArray[np.uint16]:
     result = __block_reduce_add__(img, block_size)
     return result.astype(np.uint8)
 
-@jit(nopython=True, cache=True, parallel=PARALLEL)
+@jit(nopython=True, cache=True)
 def block_reduce_or(img: np.ndarray, block_size: tuple) -> NDArray[np.uint16]:
     # result = np.add.reducseat(np.bitwise_or.reduceat(img, np.arange(0, img.shape[0], block_size), axis=0),
     #                                   np.arange(0, img.shape[1], block_size), axis=1, dtype=np.uint16)
     result = __block_reduce_or__(img, block_size)
     return result.astype(np.uint8)
 
-@jit(nopython=True, cache=True, parallel=PARALLEL)
+@jit(nopython=True, cache=True)
 def denoise_image(img: np.ndarray):
     denoised = block_reduce_or(img, (2,2))
 
