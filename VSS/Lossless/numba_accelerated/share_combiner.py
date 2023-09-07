@@ -75,7 +75,8 @@ def __combine_shares__(share1: np.ndarray, share2: np.ndarray):
 #     return color_img
 
 
-def combine_shares(share1: np.ndarray, share2: np.ndarray, verbose=True):
+def combine_shares(share1: np.ndarray, share2: np.ndarray, verbose=True, high_res=False):
+    print('combining shares')
     combined_share = __combine_shares__(share1, share2)
     if verbose:
         plt.imshow(combined_share)

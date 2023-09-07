@@ -41,7 +41,7 @@ def __generate_shares__(img: np.ndarray):
             share_image2[:,:,plane] = share_image2[:,:,plane] + (s2 * 2**i)
     return share_image1, share_image2
 
-def generate_shares(img: np.ndarray, verbose = False):
+def generate_shares(img: np.ndarray, verbose = False, high_res = False):
     share1, share2 = __generate_shares__(img)
     # print(share1)
     if verbose:

@@ -31,7 +31,7 @@ def gray_to_color(img: np.ndarray):
     color_img = color_img.astype(np.uint8) * 8
     return color_img
 
-def combine_shares(share1: np.ndarray, share2: np.ndarray, verbose=True):
+def combine_shares(share1: np.ndarray, share2: np.ndarray, verbose=True, high_res = False):
     combined_share = __combine_shares__(share1, share2)
     if verbose:
         plt.imshow(combined_share)

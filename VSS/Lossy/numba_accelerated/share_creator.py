@@ -6,8 +6,6 @@ import numba as nb
 from numba import prange
 from scipy.fftpack import dct, idct
 
-BITPLANE_COUNT = 8
-
 '''
 Using arithmetic instead of bitwise operations because python has a "fast track" for arithmetic operations
 '''
@@ -33,6 +31,17 @@ def compress(img: np.ndarray):
     compressed_img = np.zeros((img.shape[0],img.shape[1]), dtype=np.uint8)
     compressed_img = (img[:,:,0] & 0b11000000) | ((img[:,:,1] & 0b111000000) >> 2) | ((img[:,:,2] & 0b11100000) >> 5)
     return compressed_img
+    
+@jit(parallel=True, nopython=True, cache=True)
+def compress_16bit(img: np.ndarray):
+    img = img.astype(np.uint16)
+    compressed_img = np.zeros((img.shape[0],img.shape[1]), dtype=np.uint16)
+    # compressed_img = (img[:,:,0] & 0b11111000) | ((img[:,:,1] & 0b111111000) >> 5) | ((img[:,:,2] & 0b11111000) >> 11)
+    compressed_img = ((img[:,:,0] >> 3) * 2048) | \
+                    ((img[:,:,1] >> 2) * 32) | \
+                    ((img[:,:,2] >> 3))
+    return compressed_img.astype(np.uint16)
+
 
 @vectorize(nopython=True, cache=True)
 def get_bitplane(img: np.ndarray, n: int):
@@ -58,35 +67,57 @@ def create_bitplane_shares(img: np.ndarray):
 #Broken the function into two parts to make to keep the pure numba functions separate from Matplotlib utils
 @jit(nopython=True, parallel=True, cache=True)
 def __generate_shares__(img: np.ndarray):
+    BITPLANES = 8
     # img = rgb_to_ycbcr(img)
     img = img.astype(np.uint8)
     img = compress(img)
     share_image1 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint8)
     share_image2 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint8)
 
-    for i in range(0,BITPLANE_COUNT):
+    for i in range(0,BITPLANES):
         bitplane = get_bitplane(img, i)
         s1, s2 = create_bitplane_shares(bitplane)
         share_image1 = share_image1 + (s1 * 2**i).astype(np.uint8)
         share_image2 = share_image2 + (s2 * 2**i).astype(np.uint8)
     return share_image1, share_image2
 
-def generate_shares(img: np.ndarray, verbose = False):
-    share1, share2 = __generate_shares__(img)
+@jit(nopython=True, parallel=True, cache=True)
+def __generate_shares_16_bit__(img: np.ndarray):
+    # img = rgb_to_ycbcr(img)
+    BITPLANES = 16
+    img = img.astype(np.uint8)
+    img = compress_16bit(img)
+    share_image1 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint16)
+    share_image2 = np.zeros(shape=(img.shape[0]*2, img.shape[1]*2), dtype=np.uint16)
+
+    for i in range(0,BITPLANES):
+        bitplane = get_bitplane(img, i)
+        s1, s2 = create_bitplane_shares(bitplane)
+        share_image1 = share_image1 + (s1 * 2**i).astype(np.uint16)
+        share_image2 = share_image2 + (s2 * 2**i).astype(np.uint16)
+    return share_image1, share_image2
+
+def generate_shares(img: np.ndarray, verbose = False, high_res = False):
+    if high_res:
+        share1, share2 = __generate_shares_16_bit__(img)
+        bitplanes = 16
+    else:
+        share1, share2 = __generate_shares__(img)
+        bitplanes = 8
     if verbose:
         import share_combiner
         # img = color_to_gray(img)
         plt.figure(figsize=(30,160))
-        for i in range(BITPLANE_COUNT):
-            plt.subplot(3, BITPLANE_COUNT, i+1)
+        for i in range(bitplanes):
+            plt.subplot(3, bitplanes, i+1)
             plt.axis('off')
             plt.xlabel(f'Bitplane {i}')
             plt.imshow(get_bitplane(img, i), cmap='gray')
-            plt.subplot(3, BITPLANE_COUNT, i+BITPLANE_COUNT+1)
+            plt.subplot(3, bitplanes, i+bitplanes+1)
             plt.axis('off')
             plt.xlabel(f'Bitplane {i}')
             plt.imshow(get_bitplane(share1,i), cmap='gray')
-            plt.subplot(3, BITPLANE_COUNT, i+BITPLANE_COUNT*2+1)
+            plt.subplot(3, bitplanes, i+bitplanes*2+1)
             plt.axis('off')
             plt.xlabel(f'Bitplane {i}')
             plt.imshow(get_bitplane(share2,i), cmap='gray')

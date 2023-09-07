@@ -45,7 +45,7 @@ def __generate_shares__(img: np.ndarray):
     # print("SI2", share_image2)
     return share_image1, share_image2
 
-def generate_shares(img: np.ndarray, verbose = False):
+def generate_shares(img: np.ndarray, verbose = False, high_res = True):
     share1, share2 = __generate_shares__(img)
     if verbose:
         import share_combiner
@@ -80,6 +80,6 @@ def generate_shares(img: np.ndarray, verbose = False):
 
 if __name__ == '__main__':
     IMAGE = io.imread('images.jpeg')
-    x = generate_shares(IMAGE, verbose=False)
+    x = generate_shares(IMAGE, verbose=False, high_res=True)
     print(x[0][100:110,100:110])
     print(x[1][100:110,100:110])
