@@ -9,17 +9,6 @@ from scipy.fftpack import dct, idct
 '''
 Using arithmetic instead of bitwise operations because python has a "fast track" for arithmetic operations
 '''
-@jit(nopython=True, cache=True, parallel=True)
-def rgb_to_ycbcr(img: np.ndarray):
-    ycbcr = np.zeros(img.shape, dtype=np.float64)
-    img = img.astype(np.float64)
-
-    ycbcr[:,:,0] = img[:,:,0] * 0.299 + img[:,:,1] * 0.587 + img[:,:,2] * 0.114 #Y
-    ycbcr[:,:,1] = (img[:,:,2] - ycbcr[:,:,0]) * 0.564 + 128 #Cb
-    ycbcr[:,:,2] = (img[:,:,0] - ycbcr[:,:,0]) * 0.713 + 128 #Cr
-    # print(ycbcr)
-    return ycbcr.astype(np.uint8)
-
 '''
     Compresses a 3 channel image into a 2 channel image
     RGB -> Gray Scale, in the ratio 2:3:3, as per this paper: https://www.researchgate.net/publication/269300186_Legibility_of_Web_Page_on_Full_High_Definition_Display
@@ -137,5 +126,5 @@ def generate_shares(img: np.ndarray, verbose = False, high_res = False):
 
 if __name__ == '__main__':
     IMAGE = io.imread('images.jpeg')
-    # generate_shares(IMAGE, verbose=True)
+    generate_shares(IMAGE, verbose=True)
 
